@@ -5,10 +5,10 @@ from psycopg2 import Error
 class DatabaseConnection:
     def __init__(self):
         self.host = "localhost"
-        self.port = "5432"
-        self.database = "pfe_db"
+        self.port = "8000"
+        self.database = "postgres"
         self.user = "postgres"
-        self.password = "ikramzalani2003"
+        self.password = "2003"
 
     def connect(self):
         try:

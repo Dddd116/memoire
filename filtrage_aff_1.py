@@ -1,4 +1,6 @@
-
+# =====================================================
+# ÉTAPE 1:  filtrage de signel basee sur les ondelettes
+# ======================================================
 # Importation de la bibliotheque pandas pour manipuler les tableaux de données
 import pandas as pd
 

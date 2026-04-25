@@ -1,8 +1,8 @@
 
 
-# ==========================================
-# FEATURE SELECTION (Corrélation + Random Forest)
-# ==========================================
+# =======================================================
+# ÉTAPE 2: FEATURE SELECTION (Corrélation + Random Forest)
+# =======================================================
 
 # Import des bibliothèques nécessaires
 import pandas as pd

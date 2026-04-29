@@ -360,8 +360,6 @@ py Test_Statique.py
 > **Prérequis :** `best_coagulant_model.pkl` et `features_list.pkl` doivent exister (générés par `Pipeline.py`).
 
 ---
-
-
 ## 📋 Données
 
 - **Source** : Station de traitement des eaux de Sidi Khelifa, Algérie

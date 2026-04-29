@@ -1,14 +1,22 @@
-from tensorflow.python.keras.metrics import MAE
-
 # 💧 Prédiction de la Dose de Coagulant (Al₂(SO₄)₃) — محطة سيدي خليفة
 
 > **Mémoire de Master** — Traitement et modélisation de données temporelles issues de systèmes réels de traitement des eaux (2018–2019)
 
 ---
 
-## 📌 Objectif du projet
+## 📌 Contexte et Objectif
 
-Développer un système intelligent capable de **prédire automatiquement la dose optimale de sulfate d'aluminium Al₂(SO₄)₃** (coagulant) à injecter dans la station de traitement des eaux de **Sidi Khelifa**, à partir des cinq paramètres mesurés en temps réel :
+Ce projet vise à développer un **système intelligent de prédiction automatique** de la dose optimale de sulfate d'aluminium Al₂(SO₄)₃ (coagulant) à injecter dans la station de traitement des eaux de **Sidi Khelifa (Algérie)**, à partir de cinq paramètres physico-chimiques mesurés en temps réel.
+
+La prédiction précise de la dose de coagulant est critique pour :
+- Réduire la consommation excessive de réactifs chimiques
+- Garantir la qualité de l'eau traitée
+- Automatiser et optimiser l'exploitation de la station
+
+---
+## 🔢 Paramètres du Modèle
+
+### Entrées (Features)
 
 | Paramètre | Symbole | Unité |
 |-----------|---------|-------|
@@ -18,7 +26,11 @@ Développer un système intelligent capable de **prédire automatiquement la dos
 | Conductivité électrique | SC | µS/cm |
 | Oxygène dissous | DO | mg/L |
 
-La variable cible (sortie) est : **AL2SO4** (mg/L)
+### Sortie (Target)
+
+| Variable | Symbole | Unité |
+|----------|---------|-------|
+| Dose de sulfate d'aluminium | AL2SO4 | mg/L |
 
 ---
 
@@ -60,7 +72,7 @@ Données brutes (XLSX)
 [Étape 9] Sauvegarde (pkl, xlsx, png)
         │
         ▼
-[Étape 10] Test Statique 
+[Étape 10]  Test Statique sur données réelles historiques 
 
 ```
 
@@ -92,7 +104,7 @@ Le bruit dans les séries temporelles est éliminé **avant** tout apprentissage
 
 ## 🤖 Modèles de Machine Learning utilisés
 
-### Modèles dans `Pipeline.py`
+### Modèles dans `Pipline.py`
 
 | Modèle | Type | Paramètres clés |
 |--------|------|-----------------|
@@ -103,14 +115,16 @@ Le bruit dans les séries temporelles est éliminé **avant** tout apprentissage
 
 ---
 
-### Résultats du `Pipeline.py` (pipeline principal)
+### Résultats du `Pipline.py` (pipeline principal)
 
 | Modèle               | R²     | RMSE (mg/L) | MAE (mg/L) |
 |----------------------|--------|-------------|------------|
-| **Random Forest**    | **0.97** | **1**       | **0.48**   |
+| **XGBoost**    | **0.97** | **1**       | **0.48**   |
 | Random Forest        | 0.96   | 1.17        | 0.58       |
 | Neural Network (MLP) | 0.85   | 2.35        | 1.53       |
 | Linear Regression    | 0.73   | 3.23        | 2.49       |
+
+> XGBoost obtient le meilleur R² (0.97) et est sélectionné automatiquement comme modèle final.
 
 ---
 
@@ -136,7 +150,7 @@ L'importance des variables a été calculée par **4 méthodes** : Random Forest
 
 ### Description du test
 
-Le script `Test_Statique.py` effectue un **test sur données réelles** en chargeant le modèle XGBoost sauvegardé (`best_coagulant_model.pkl`) et en lui soumettant **10 observations historiques datées** issues de la station Sidi Khelifa. Ce test permet de valider les performances du modèle en conditions réelles, sur des échantillons **non vus pendant l'entraînement**.
+Le script `Test_Statique.py` effectue un **test sur données réelles** en chargeant le modèle XGBoost sauvegardé (`best_coagulant_model.pkl`) et en lui soumettant **10 observations historiques datées** issues de la station Sidi Khelifa. Ce test permet de valider les performances du modèle en conditions réelles, sur des échantillons.
 
 ---
 
@@ -180,7 +194,7 @@ model = joblib.load("best_coagulant_model.pkl")
 features = joblib.load("features_list.pkl")
 ```
 
-**Explication :** Le modèle XGBoost entraîné est chargé depuis le fichier `.pkl` généré par `Pipeline.py`. La liste des features (`['pH', 'TUR', 'TE', 'SC', 'DO']`) est également chargée pour garantir que les colonnes d'entrée sont dans le **même ordre** qu'à l'entraînement. C'est une précaution essentielle pour éviter toute erreur de correspondance de variables.
+**Explication :** Le modèle XGBoost entraîné est chargé depuis le fichier `.pkl` généré par `Pipline.py`. La liste des features (`['pH', 'TUR', 'TE', 'SC', 'DO']`) est également chargée pour garantir que les colonnes d'entrée sont dans le **même ordre** qu'à l'entraînement. C'est une précaution essentielle pour éviter toute erreur de correspondance de variables.
 
 ---
 
@@ -215,7 +229,7 @@ X_test = df_test[features]  # Sélection des colonnes dans le bon ordre
 y_pred = model.predict(X_test)
 ```
 
-**Explication :** Le modèle XGBoost prédit la dose de coagulant (en mg/L) pour chacun des 10 échantillons. Les prédictions sont stockées dans le vecteur `y_pred`. Aucun pré-traitement supplémentaire n'est nécessaire ici, car les données de test statique sont directement dans les unités originales (le modèle a été entraîné sur des données filtrées par ondelettes, mais le test statique utilise les valeurs brutes pour simuler un usage en temps réel).
+**Explication :** Le modèle XGBoost prédit la dose de coagulant (en mg/L) pour chacun des 10 échantillons. Les prédictions sont stockées dans le vecteur `y_pred`.  
 
 ---
 
@@ -229,7 +243,7 @@ for i, row in df_test.iterrows():
     print(f"{row['date']:40s} {row['TUR']:8.1f} {row['SC']:8.0f} {y_real[i]:12.2f} {y_pred[i]:12.2f} {erreurs[i]:10.2f}")
 ```
 
-**Explication :** Pour chaque observation, on calcule l'**erreur absolue** (|dose prédite − dose réelle|) et on affiche un tableau récapitulatif. L'erreur absolue est préférée ici car elle est directement interprétable en mg/L : par exemple, une erreur de 0.38 mg/L signifie que la prédiction est presque parfaite, tandis qu'une erreur de 6.38 mg/L signifie un écart plus significatif.
+**Explication :** Pour chaque observation, on calcule l'**erreur absolue** (|dose prédite − dose réelle|) et on affiche un tableau récapitulatif. L'erreur absolue est préférée ici car elle est directement interprétable en mg/L : par exemple, une erreur de 0.38 mg/L signifie que la prédiction est presque parfaite.  
 
 ---
 
@@ -270,9 +284,9 @@ print(f"Erreur moyenne (MAE): {MAE:.2f} mg/L")
 
 ## ✅ Garantie : aucune fuite de données (No Data Leakage)
 
-| Règle | Statut |
-|-------|--------|
-| AL2SO4 absent de X (entrées) | ✅ Vérifié à chaque étape |
+| Règle | Statut                                  |
+|-------|-----------------------------------------|
+| AL2SO4 absent de X (entrées) | ✅ Vérifié à chaque étape                |
 
 ---
 
@@ -290,32 +304,63 @@ print(f"Erreur moyenne (MAE): {MAE:.2f} mg/L")
 | **Matplotlib** | Visualisation des résultats |
 | **Seaborn** | Analyse statistique et matrices de corrélation |
 | **Joblib** | Sauvegarde/chargement des modèles `.pkl` |
+---
+## 🚀 Installation et Utilisation
 
-### Installation
+### 1. Cloner le dépôt
+
+```bash
+git clone https://github.com/Dddd116/memoire.git
+cd memoire
+```
+
+### 2. Installer les dépendances
 
 ```bash
 py -m pip install pandas numpy scikit-learn PyWavelets xgboost shap matplotlib seaborn joblib openpyxl
 ```
 
----
+### 3. Préparer les données
 
-## 🚀 Utilisation
+Placer le fichier de données dans le répertoire racine :
 
-### 1. Exécuter le pipeline complet
-
-```bash
-py Pipeline.py
+```
+SIDI KHELIFA DATA-2018-2019.xlsx
 ```
 
-### 2. Tester sur données réelles
+### 4. Exécuter le pipeline complet
+
+```bash
+py Pipline.py
+```
+
+Ce script exécute toutes les étapes (1 à 9) et génère les fichiers suivants :
+
+```
+best_coagulant_model.pkl        ← Meilleur modèle entraîné (XGBoost)
+scaler.pkl                      ← Normalisateur StandardScaler
+features_list.pkl               ← Liste ordonnée des features
+top5_data.pkl                   ← Top 5 valeurs min/max par variable
+training_results.pkl            ← Résultats d'entraînement
+best_model_metrics.pkl          ← Métriques du meilleur modèle
+feature_importance_results.pkl  ← Importance par modèle
+model_comparison.xlsx           ← Tableau comparatif des modèles
+feature_importance.xlsx         ← Tableau d'importance des features
+signaux_avant_apres_filtrage.png  ← Graphique wavelet denoising
+feature_importance.png          ← Graphique importance des features
+model_comparison.png            ← Graphique comparaison des modèles
+```
+
+### 5. Tester sur données réelles
 
 ```bash
 py Test_Statique.py
 ```
 
-Nécessite : `best_coagulant_model.pkl` et `features_list.pkl` (générés par Pipeline.py)
+> **Prérequis :** `best_coagulant_model.pkl` et `features_list.pkl` doivent exister (générés par `Pipeline.py`).
 
 ---
+
 
 ## 📋 Données
 
